@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vaccine.Booking", "Vaccine.Booking\Vaccine.Booking.csproj", "{CD4E6D31-0E4F-4943-9BCC-B211165D37FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vaccination.Booking.Umang", "Vaccination.Booking.Umang\Vaccination.Booking.Umang.csproj", "{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CD4E6D31-0E4F-4943-9BCC-B211165D37FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD4E6D31-0E4F-4943-9BCC-B211165D37FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD4E6D31-0E4F-4943-9BCC-B211165D37FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD4E6D31-0E4F-4943-9BCC-B211165D37FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9EA47C97-E27F-4F60-AF67-54D38CF2D957}
+	EndGlobalSection
+EndGlobal
