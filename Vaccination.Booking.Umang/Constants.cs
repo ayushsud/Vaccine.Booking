@@ -24,8 +24,8 @@ namespace Vaccination.Booking.Umang
 
         public static class BearerTokens
         {
-            public static readonly string Cowin = "15974e40-bafd-316d-acef-8cdae0b0f7d5";
-            public static readonly string Umang = "02f6dd09-7573-3c7d-a9e7-7f0f429f9d50";
+            public static readonly string Cowin = string.Empty;
+            public static readonly string Umang = string.Empty;
         }
 
         public static class FilePaths
