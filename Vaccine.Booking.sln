@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vaccine.Booking", "Vaccine.Booking\Vaccine.Booking.csproj", "{CD4E6D31-0E4F-4943-9BCC-B211165D37FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vaccination.Booking.Umang", "Vaccination.Booking.Umang\Vaccination.Booking.Umang.csproj", "{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vaccination.Booking.Umang", "Vaccination.Booking.Umang\Vaccination.Booking.Umang.csproj", "{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vaccination.Booking.Contracts", "Vaccination.Booking.Contracts\Vaccination.Booking.Contracts.csproj", "{69C0A50A-E9DB-4DED-9A97-79F6072A257D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D1D850F-AC33-45D6-B6DC-DABFB9E7ED80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69C0A50A-E9DB-4DED-9A97-79F6072A257D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69C0A50A-E9DB-4DED-9A97-79F6072A257D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69C0A50A-E9DB-4DED-9A97-79F6072A257D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69C0A50A-E9DB-4DED-9A97-79F6072A257D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

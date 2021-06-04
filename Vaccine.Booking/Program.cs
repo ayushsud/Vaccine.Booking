@@ -3,8 +3,10 @@ using System;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Vaccination.Booking.Contracts;
 using Vaccination.Booking.Umang;
 using Vaccination.Booking.Umang.Contracts;
+using Microsoft.Extensions.Configuration;
 
 namespace Vaccine.Booking
 {
@@ -17,9 +19,11 @@ namespace Vaccine.Booking
             RegisterServices();
             var scope = _serviceProvider.CreateScope();
             var scheduleAppointmentService = scope.ServiceProvider.GetRequiredService<IScheduleAppointmentService>();
+            var profile = scope.ServiceProvider.GetRequiredService<IProfileService>().GetProfile();
+            var pinCodes = scope.ServiceProvider.GetRequiredService<IPinCodeProvider>().GetPinCodes();
             try
             {
-                scheduleAppointmentService.ScheduleAppointmentAsync().GetAwaiter().GetResult();
+                scheduleAppointmentService.ScheduleAppointmentAsync(profile, pinCodes).GetAwaiter().GetResult();
             }
             catch (TaskCanceledException)
             {
@@ -32,13 +36,19 @@ namespace Vaccine.Booking
         private static void RegisterServices()
         {
             var services = new ServiceCollection();
+            var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            services.AddOptions();
+            services.Configure<FilePathConfigurations>(configuration.GetSection("FilePaths"));
+            services.AddSingleton<IConfiguration>(configuration);
+            UmangConfigurations umangConfigs = new UmangConfigurations();
+            configuration.GetSection("Umang").Bind(umangConfigs);
             services.AddHttpClient<ICowinHttpClient, CowinHttpClient>(client =>
             {
-                client.BaseAddress = new Uri(Constants.URLs.BaseUrl);
-                 #region add headers
-                 client.DefaultRequestHeaders.Accept.Clear();
+                client.BaseAddress = new Uri(umangConfigs.BaseUrl);
+                #region add headers
+                client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.ApplicationJson));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Constants.BearerTokens.Cowin);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", umangConfigs.BearerTokens.Cowin);
                 client.DefaultRequestHeaders.Connection.Clear();
                 client.DefaultRequestHeaders.Connection.Add("keep-alive");
                 client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
@@ -48,15 +58,15 @@ namespace Vaccine.Booking
                 client.DefaultRequestHeaders.Add("subsid", "0");
                 client.DefaultRequestHeaders.Add("subsid2", "0");
                 client.DefaultRequestHeaders.Add("tenantId", string.Empty);
-                 #endregion
-             });
+                #endregion
+            });
             services.AddHttpClient<IUmangHttpClient, UmangHttpClient>(client =>
             {
-                client.BaseAddress = new Uri(Constants.URLs.BaseUrl);
+                client.BaseAddress = new Uri(umangConfigs.BaseUrl);
                 #region add headers
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.ApplicationJson));
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Constants.BearerTokens.Umang);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", umangConfigs.BearerTokens.Umang);
                 client.DefaultRequestHeaders.Connection.Clear();
                 client.DefaultRequestHeaders.Connection.Add("keep-alive");
                 client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };

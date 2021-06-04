@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Vaccination.Booking.Contracts;
 using Vaccination.Booking.Umang.Contracts;
 
 namespace Vaccination.Booking.Umang
@@ -20,24 +21,19 @@ namespace Vaccination.Booking.Umang
         private List<string> _beneficiaries;
         private readonly CancellationTokenSource tokenSource;
         private readonly ICowinHttpClient _cowinHttpClient;
-        private readonly IProfileService _profileService;
-        private readonly IPinCodeProvider _pinCodeProvider;
         private readonly IUmangTokenProvider _umangTokenProvider;
 
-        public ScheduleAppointmentService(ICowinHttpClient cowinHttpClient, IProfileService profileService, IPinCodeProvider pinCodeProvider, IUmangTokenProvider umangTokenProvider)
+        public ScheduleAppointmentService(ICowinHttpClient cowinHttpClient, IUmangTokenProvider umangTokenProvider)
         {
             _cowinHttpClient = cowinHttpClient;
-            _profileService = profileService;
-            _pinCodeProvider = pinCodeProvider;
             _umangTokenProvider = umangTokenProvider;
             _isSlotBooked = false;
             tokenSource = new CancellationTokenSource();
         }
 
-        public async Task ScheduleAppointmentAsync()
+        public async Task ScheduleAppointmentAsync(Profile profile, List<string> pinCodes)
         {
-            var profile = _profileService.GetProfile();
-            _centerPriorityList = _pinCodeProvider.GetPinCodes();
+            _centerPriorityList = pinCodes;
             _beneficiaries = profile.Beneficiaries;
             if (string.IsNullOrWhiteSpace(profile.Mobile) ||
                 string.IsNullOrWhiteSpace(profile.Mpin) ||

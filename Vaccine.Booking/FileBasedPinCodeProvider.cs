@@ -1,18 +1,24 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Vaccination.Booking.Umang.Contracts;
+using Vaccination.Booking.Contracts;
 
-namespace Vaccination.Booking.Umang
+namespace Vaccine.Booking
 {
     public class FileBasedPinCodeProvider : IPinCodeProvider
     {
+        private readonly string _filePath;
+        public FileBasedPinCodeProvider(IOptions<FilePathConfigurations> filePaths)
+        {
+            _filePath = filePaths.Value.PinCodes;
+        }
         public List<string> GetPinCodes()
         {
             try
             {
-                var data = File.ReadAllText(Constants.FilePaths.PinCodes);
+                var data = File.ReadAllText(_filePath);
                 return JsonConvert.DeserializeObject<List<string>>(data);
             }
             catch(Exception)

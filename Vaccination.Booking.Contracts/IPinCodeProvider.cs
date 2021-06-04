@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Vaccination.Booking.Umang.Contracts
+namespace Vaccination.Booking.Contracts
 {
     public interface IPinCodeProvider
     {

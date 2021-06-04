@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Vaccination.Booking.Umang.Contracts
+namespace Vaccination.Booking.Contracts
 {
     public interface IScheduleAppointmentService
     {
-        Task ScheduleAppointmentAsync();
+        Task ScheduleAppointmentAsync(Profile profile, List<string> pinCodes);
     }
 }

@@ -1,19 +1,25 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using Vaccination.Booking.Contracts;
 using Vaccination.Booking.Umang.Contracts;
 
-namespace Vaccination.Booking.Umang
+namespace Vaccine.Booking
 {
     public class FileBasedProfileService : IProfileService
     {
+        private readonly string _filePath;
+        public FileBasedProfileService(IOptions<FilePathConfigurations> filePaths)
+        {
+            _filePath = filePaths.Value.Profile;
+        }
         public Profile GetProfile()
         {
             try
             {
-                var data = File.ReadAllText(Constants.FilePaths.Profile);
+                var data = File.ReadAllText(_filePath);
                 return JsonConvert.DeserializeObject<Profile>(data);
             }
             catch (Exception)
