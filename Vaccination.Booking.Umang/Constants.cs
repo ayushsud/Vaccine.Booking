@@ -6,6 +6,8 @@ namespace Vaccination.Booking.Umang
 {
     public static class Constants
     {
+        public static readonly string Umang = "Umang";
+        public static readonly string Cowin = "Cowin";
         public static class URLs
         {
             public static readonly string BaseUrl = string.Empty;

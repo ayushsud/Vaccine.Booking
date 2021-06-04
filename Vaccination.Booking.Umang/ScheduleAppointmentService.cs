@@ -19,12 +19,14 @@ namespace Vaccination.Booking.Umang
         private List<string> _centerPriorityList;
         private List<string> _beneficiaries;
         private readonly CancellationTokenSource tokenSource;
+        private readonly ICowinHttpClient _cowinHttpClient;
         private readonly IProfileService _profileService;
         private readonly IPinCodeProvider _pinCodeProvider;
         private readonly IUmangTokenProvider _umangTokenProvider;
 
-        public ScheduleAppointmentService(IProfileService profileService, IPinCodeProvider pinCodeProvider, IUmangTokenProvider umangTokenProvider)
+        public ScheduleAppointmentService(ICowinHttpClient cowinHttpClient, IProfileService profileService, IPinCodeProvider pinCodeProvider, IUmangTokenProvider umangTokenProvider)
         {
+            _cowinHttpClient = cowinHttpClient;
             _profileService = profileService;
             _pinCodeProvider = pinCodeProvider;
             _umangTokenProvider = umangTokenProvider;
@@ -44,61 +46,45 @@ namespace Vaccination.Booking.Umang
                 _beneficiaries.Count == 0 ||
                 _centerPriorityList.Count == 0)
                 return;
-            using (var httpClient = new HttpClient())
+            var umangLoginResponse = await _umangTokenProvider.GetUmangToken(profile.Mobile, profile.Mpin);
+            if (!string.IsNullOrWhiteSpace(umangLoginResponse.Token) && !string.IsNullOrWhiteSpace(umangLoginResponse.UserId))
             {
-                httpClient.BaseAddress = new Uri(Constants.URLs.BaseUrl);
-                #region add headers
-                httpClient.DefaultRequestHeaders.Accept.Clear();
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.ApplicationJson));
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Constants.BearerTokens.Cowin);
-                httpClient.DefaultRequestHeaders.Connection.Clear();
-                httpClient.DefaultRequestHeaders.Connection.Add("keep-alive");
-                httpClient.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
-                httpClient.DefaultRequestHeaders.Add("deptid", "355");
-                httpClient.DefaultRequestHeaders.Add("formtrkr", "0");
-                httpClient.DefaultRequestHeaders.Add("srvid", "1604");
-                httpClient.DefaultRequestHeaders.Add("subsid", "0");
-                httpClient.DefaultRequestHeaders.Add("subsid2", "0");
-                httpClient.DefaultRequestHeaders.Add("tenantId", string.Empty);
-                #endregion
-                var umangLoginResponse = await _umangTokenProvider.GetUmangToken(profile.Mobile, profile.Mpin);
-                if (!string.IsNullOrWhiteSpace(umangLoginResponse.Token) && !string.IsNullOrWhiteSpace(umangLoginResponse.UserId))
+                _umangtoken = umangLoginResponse.Token;
+                _userId = umangLoginResponse.UserId;
+                var token = await GetToken(profile.Mobile);
+                if (!string.IsNullOrWhiteSpace(token))
                 {
-                    _umangtoken = umangLoginResponse.Token;
-                    _userId = umangLoginResponse.UserId;
-                    var token = await GetToken(httpClient, profile.Mobile);
-                    if (!string.IsNullOrWhiteSpace(token))
+                    Console.WriteLine("\nTrying to book slots...");
+                    while (!_isSlotBooked)
                     {
-                        Console.WriteLine("\nTrying to book slots...");
-                        while (!_isSlotBooked)
+                        var slotsReq = new StringContent(JsonConvert.SerializeObject(new GetSlotsRequest
                         {
-                            var slotsReq = new StringContent(JsonConvert.SerializeObject(new GetSlotsRequest
-                            {
-                                token = token,
-                                tkn = _umangtoken,
-                                usrid = _userId,
-                                district_id = profile.DistrictId,
-                                date = profile.Date
-                            }), Encoding.UTF8, Constants.ApplicationJson);
-                            var slotsRes = await Utilities.PostWithRetryAsync(httpClient, Constants.URLs.Cowin + Constants.URLs.Verbs.GetSlots, slotsReq, tokenSource.Token);
-                            if (slotsRes.IsSuccessStatusCode)
+                            token = token,
+                            tkn = _umangtoken,
+                            usrid = _userId,
+                            district_id = profile.DistrictId,
+                            date = profile.Date
+                        }), Encoding.UTF8, Constants.ApplicationJson);
+                        var slotsRes = await _cowinHttpClient.PostWithRetryAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.GetSlots, slotsReq, tokenSource.Token);
+                        if (slotsRes.IsSuccessStatusCode)
+                        {
+                            var res = JsonConvert.DeserializeObject<BaseResponse>(await slotsRes.Content.ReadAsStringAsync());
+                            if (IsReponseValid(res))
                             {
                                 var slotsData = JsonConvert.DeserializeObject<GetSlotsResponse>(await slotsRes.Content.ReadAsStringAsync());
-                                if (Utilities.IsReponseValid(new BaseResponse
+                                if (slotsData.pd.centers?.Count > 0)
                                 {
-                                    rc = slotsData.rc,
-                                    rd = slotsData.rd,
-                                    rs = slotsData.rs,
-                                    pd = slotsData.pd
-                                }))
-                                {
-                                    if (slotsData.pd.centers.Count > 0)
-                                    {
-                                        await FindEligibleCentersAsync(slotsData.pd.centers, httpClient, token, tokenSource.Token);
-                                    }
-                                    else
-                                        await Task.Delay(500);
+                                    await FindEligibleCentersAsync(slotsData.pd.centers, token, tokenSource.Token);
                                 }
+                                else
+                                    await Task.Delay(500);
+                            }
+                            else
+                            {
+                                _isSlotBooked = true;
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("\nUnauthenticated access! Please rerun the program.");
+                                Console.ResetColor();
                             }
                         }
                     }
@@ -106,7 +92,7 @@ namespace Vaccination.Booking.Umang
             }
         }
 
-        private async Task<string> GetToken(HttpClient httpClient, string mobile)
+        private async Task<string> GetToken(string mobile)
         {
             var generateOtpRequest = new StringContent(JsonConvert.SerializeObject(new GenerateOtpRequest
             {
@@ -114,11 +100,11 @@ namespace Vaccination.Booking.Umang
                 usrid = _userId,
                 mobile = mobile
             }), Encoding.UTF8, Constants.ApplicationJson);
-            var generateOtpResponse = await Utilities.PostWithRetryAsync(httpClient, Constants.URLs.Cowin + Constants.URLs.Verbs.GenerateOtp, generateOtpRequest);
+            var generateOtpResponse = await _cowinHttpClient.PostWithRetryAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.GenerateOtp, generateOtpRequest);
             if (generateOtpResponse.IsSuccessStatusCode)
             {
                 var generateOtpData = JsonConvert.DeserializeObject<BaseResponse>(await generateOtpResponse.Content.ReadAsStringAsync());
-                if (Utilities.IsReponseValid(generateOtpData))
+                if (IsReponseValid(generateOtpData))
                 {
                     string txnId = generateOtpData.pd.txnId;
                     Console.WriteLine("Enter OTP");
@@ -130,11 +116,11 @@ namespace Vaccination.Booking.Umang
                         tkn = _umangtoken,
                         usrid = _userId
                     }), Encoding.UTF8, Constants.ApplicationJson);
-                    var confirmOtpResponse = await Utilities.PostWithRetryAsync(httpClient, Constants.URLs.Cowin + Constants.URLs.Verbs.ConfirmOtp, confirmOtpRequest);
+                    var confirmOtpResponse = await _cowinHttpClient.PostWithRetryAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.ConfirmOtp, confirmOtpRequest);
                     if (confirmOtpResponse.IsSuccessStatusCode)
                     {
                         var confirmOtpData = JsonConvert.DeserializeObject<BaseResponse>(await confirmOtpResponse.Content.ReadAsStringAsync());
-                        if (Utilities.IsReponseValid(confirmOtpData))
+                        if (IsReponseValid(confirmOtpData))
                         {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("OTP Verfied");
@@ -147,7 +133,7 @@ namespace Vaccination.Booking.Umang
             return string.Empty;
         }
 
-        private async Task FindEligibleCentersAsync(List<Center> centers, HttpClient httpClient, string token, CancellationToken cancellationToken)
+        private async Task FindEligibleCentersAsync(List<Center> centers, string token, CancellationToken cancellationToken)
         {
             List<Task> tasks = new List<Task>();
             _centerPriorityList.ForEach(pincode =>
@@ -164,7 +150,7 @@ namespace Vaccination.Booking.Umang
                     session.available_capacity_dose1 >= _beneficiaries.Count)
                     .ForEach(x =>
                     {
-                        tasks.Add(BookSlotAsync(httpClient, x.session_id, token, cancellationToken));
+                        tasks.Add(BookSlotAsync(x.session_id, token, cancellationToken));
                     }));
                 }
             });
@@ -173,7 +159,7 @@ namespace Vaccination.Booking.Umang
             await Task.WhenAll(tasks);
         }
 
-        private async Task BookSlotAsync(HttpClient httpClient, string sessionId, string token, CancellationToken cancellationToken)
+        private async Task BookSlotAsync(string sessionId, string token, CancellationToken cancellationToken)
         {
             var scheduleAppointmentReq = new StringContent(JsonConvert.SerializeObject(new ScheduleAppointmentRequest
             {
@@ -183,7 +169,7 @@ namespace Vaccination.Booking.Umang
                 session_id = sessionId,
                 beneficiaries = _beneficiaries
             }), Encoding.UTF8, Constants.ApplicationJson);
-            var httpRes = await httpClient.PostAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.ScheduleAppointment, scheduleAppointmentReq, cancellationToken);
+            var httpRes = await _cowinHttpClient.PostAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.ScheduleAppointment, scheduleAppointmentReq, cancellationToken);
             if (httpRes.IsSuccessStatusCode)
             {
                 BaseResponse scheduleAppointmentRes = null;
@@ -197,7 +183,7 @@ namespace Vaccination.Booking.Umang
                 }
                 if (scheduleAppointmentRes != null)
                 {
-                    if (Utilities.IsReponseValid(scheduleAppointmentRes) &&
+                    if (IsReponseValid(scheduleAppointmentRes) &&
                         scheduleAppointmentRes.pd.appointment_confirmation_no != null)
                     {
                         this._isSlotBooked = true;
@@ -210,11 +196,26 @@ namespace Vaccination.Booking.Umang
                     {
                         _isSlotBooked = true;
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\nUnauthenticated access! Pease rerun the program.");
+                        Console.WriteLine("\nUnauthenticated access! Please rerun the program.");
                         Console.ResetColor();
                     }
                 }
             }
+        }
+
+        private bool IsReponseValid(BaseResponse response)
+        {
+            return response != null &&
+                response.rc != null &&
+                !string.IsNullOrWhiteSpace(response.rc) &&
+                response.rc == "200" &&
+                response.rd != null &&
+                !string.IsNullOrWhiteSpace(response.rd) &&
+                response.rd == "Success." &&
+                response.rs != null &&
+                !string.IsNullOrWhiteSpace(response.rs) &&
+                response?.rs == "S" &&
+                response.pd != null;
         }
     }
 }

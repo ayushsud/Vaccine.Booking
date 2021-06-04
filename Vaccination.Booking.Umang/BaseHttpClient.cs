@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -9,36 +8,19 @@ using Vaccination.Booking.Umang.Contracts;
 
 namespace Vaccination.Booking.Umang
 {
-    public static class Utilities
+    public class BaseHttpClient: IBaseHttpClient
     {
-        public static async Task<HttpResponseMessage> PostWithRetryAsync(HttpClient httpClient, string url, HttpContent request)
+        private readonly HttpClient _httpClient;
+        public BaseHttpClient(HttpClient httpClient)
         {
-            HttpResponseMessage response = null;
-            bool success = false;
-            do
-            {
-                try
-                {
-                    response = await httpClient.PostAsync(url, request);
-                }
-                catch
-                {
-                    //The exceptions are suppressed to not waste time in case of a failure and move on to the next retry.
-                }
-                if (response != null && response.IsSuccessStatusCode)
-                {
-                    success = true;
-                }
-                else
-                {
-                    await Task.Delay(700);
-                }
-            }
-            while (!success);
-            return response;
+            _httpClient = httpClient;
+        }
+        public async Task<HttpResponseMessage> PostAsync(string url, HttpContent request, CancellationToken cancellationToken)
+        {
+            return await _httpClient.PostAsync(url, request, cancellationToken);
         }
 
-        public static async Task<HttpResponseMessage> PostWithRetryAsync(HttpClient httpClient, string url, HttpContent request, CancellationToken cancellationToken)
+        public async Task<HttpResponseMessage> PostWithRetryAsync(string url, HttpContent request, CancellationToken cancellationToken)
         {
             HttpResponseMessage response = null;
             bool success = false;
@@ -46,9 +28,9 @@ namespace Vaccination.Booking.Umang
             {
                 try
                 {
-                    response = await httpClient.PostAsync(url, request, cancellationToken);
+                    response = await _httpClient.PostAsync(url, request, cancellationToken);
                 }
-                catch(TaskCanceledException)
+                catch (TaskCanceledException)
                 {
                     throw;
                 }
@@ -69,19 +51,31 @@ namespace Vaccination.Booking.Umang
             return response;
         }
 
-        public static bool IsReponseValid(BaseResponse response)
+        public async Task<HttpResponseMessage> PostWithRetryAsync(string url, HttpContent request)
         {
-            return response != null &&
-                response.rc != null &&
-                !string.IsNullOrWhiteSpace(response.rc) &&
-                response.rc == "200" &&
-                response.rd != null &&
-                !string.IsNullOrWhiteSpace(response.rd) &&
-                response.rd == "Success." &&
-                response.rs != null &&
-                !string.IsNullOrWhiteSpace(response.rs) &&
-                response?.rs == "S" &&
-                response.pd != null;
+            HttpResponseMessage response = null;
+            bool success = false;
+            do
+            {
+                try
+                {
+                    response = await _httpClient.PostAsync(url, request);
+                }
+                catch
+                {
+                    //The exceptions are suppressed to not waste time in case of a failure and move on to the next retry.
+                }
+                if (response != null && response.IsSuccessStatusCode)
+                {
+                    success = true;
+                }
+                else
+                {
+                    await Task.Delay(700);
+                }
+            }
+            while (!success);
+            return response;
         }
     }
 }
