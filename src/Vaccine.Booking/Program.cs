@@ -20,6 +20,16 @@ namespace Vaccine.Booking
             ServicePointManager.DefaultConnectionLimit = 5;
             RegisterServices();
             var scope = _serviceProvider.CreateScope();
+            var authenticationService = scope.ServiceProvider.GetRequiredService<IAuthenticationService>();
+            Console.WriteLine("Enter App Password");
+            string password = Console.ReadLine();
+            if (!authenticationService.Authenticate(password).GetAwaiter().GetResult())
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Invalid Password!");
+                Console.ResetColor();
+                return;
+            }
             var scheduleAppointmentService = scope.ServiceProvider.GetRequiredService<IScheduleAppointmentService>();
             var profile = scope.ServiceProvider.GetRequiredService<IProfileService>().GetProfile();
             var pinCodes = scope.ServiceProvider.GetRequiredService<IPinCodeProvider>().GetPinCodes();
@@ -76,12 +86,15 @@ namespace Vaccine.Booking
             });
             CowinConfigurations cowinConfigs = new CowinConfigurations();
             configuration.GetSection("Cowin").Bind(cowinConfigs);
-            services.AddHttpClient<IScheduleAppointmentService, ScheduleCowinAppointmentService>(client=>
+            services.AddHttpClient<IScheduleAppointmentService, ScheduleCowinAppointmentService>(client =>
             {
                 client.BaseAddress = new Uri(cowinConfigs.BaseUrl);
                 client.DefaultRequestHeaders.Add("Host", cowinConfigs.Headers.Host);
                 client.DefaultRequestHeaders.Add("origin", cowinConfigs.Headers.Origin);
             });
+            string authenticationUrl = configuration.GetValue<string>("AuthenticationUrl");
+            services.AddHttpClient<IAuthenticationService, AuthenticationService>(client =>
+                    client.BaseAddress = new Uri(authenticationUrl));
             services.AddSingleton<IBaseHttpClient, BaseHttpClient>();
             services.AddSingleton<IProfileService, FileBasedProfileService>();
             services.AddSingleton<IPinCodeProvider, FileBasedPinCodeProvider>();
