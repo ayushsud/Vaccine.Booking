@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Vaccination.Booking.Contracts\Vaccination.Booking.Contracts.csproj" />
+    <ProjectReference Include="..\Vaccination.Booking.Cowin\Vaccination.Booking.Cowin.csproj" />
     <ProjectReference Include="..\Vaccination.Booking.Umang\Vaccination.Booking.Umang.csproj" />
   </ItemGroup>
 

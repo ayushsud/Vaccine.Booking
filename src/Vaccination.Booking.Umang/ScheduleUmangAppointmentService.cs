@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ using Vaccination.Booking.Umang.Contracts;
 
 namespace Vaccination.Booking.Umang
 {
-    public class ScheduleAppointmentService : IScheduleAppointmentService
+    public class ScheduleUmangAppointmentService : IScheduleAppointmentService
     {
         private bool _isSlotBooked;
         private string _umangtoken;
@@ -23,7 +22,7 @@ namespace Vaccination.Booking.Umang
         private readonly ICowinHttpClient _cowinHttpClient;
         private readonly IUmangTokenProvider _umangTokenProvider;
 
-        public ScheduleAppointmentService(ICowinHttpClient cowinHttpClient, IUmangTokenProvider umangTokenProvider)
+        public ScheduleUmangAppointmentService(ICowinHttpClient cowinHttpClient, IUmangTokenProvider umangTokenProvider)
         {
             _cowinHttpClient = cowinHttpClient;
             _umangTokenProvider = umangTokenProvider;
@@ -70,7 +69,7 @@ namespace Vaccination.Booking.Umang
                                 var slotsData = JsonConvert.DeserializeObject<GetSlotsResponse>(await slotsRes.Content.ReadAsStringAsync());
                                 if (slotsData.pd.centers?.Count > 0)
                                 {
-                                    await FindEligibleCentersAsync(slotsData.pd.centers, token, tokenSource.Token);
+                                    await FindEligibleCentersAsync(slotsData.pd.centers, token);
                                 }
                                 else
                                     await Task.Delay(500);
@@ -129,7 +128,7 @@ namespace Vaccination.Booking.Umang
             return string.Empty;
         }
 
-        private async Task FindEligibleCentersAsync(List<Center> centers, string token, CancellationToken cancellationToken)
+        private async Task FindEligibleCentersAsync(List<Center> centers, string token)
         {
             List<Task> tasks = new List<Task>();
             _centerPriorityList.ForEach(pincode =>
@@ -146,7 +145,7 @@ namespace Vaccination.Booking.Umang
                     session.available_capacity_dose1 >= _beneficiaries.Count)
                     .ForEach(x =>
                     {
-                        tasks.Add(BookSlotAsync(x.session_id, token, cancellationToken));
+                        tasks.Add(BookSlotAsync(x.session_id, token));
                     }));
                 }
             });
@@ -155,7 +154,7 @@ namespace Vaccination.Booking.Umang
             await Task.WhenAll(tasks);
         }
 
-        private async Task BookSlotAsync(string sessionId, string token, CancellationToken cancellationToken)
+        private async Task BookSlotAsync(string sessionId, string token)
         {
             var scheduleAppointmentReq = new StringContent(JsonConvert.SerializeObject(new ScheduleAppointmentRequest
             {
@@ -165,7 +164,7 @@ namespace Vaccination.Booking.Umang
                 session_id = sessionId,
                 beneficiaries = _beneficiaries
             }), Encoding.UTF8, Constants.ApplicationJson);
-            var httpRes = await _cowinHttpClient.PostAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.ScheduleAppointment, scheduleAppointmentReq, cancellationToken);
+            var httpRes = await _cowinHttpClient.PostAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.ScheduleAppointment, scheduleAppointmentReq, tokenSource.Token);
             if (httpRes.IsSuccessStatusCode)
             {
                 BaseResponse scheduleAppointmentRes = null;
@@ -182,7 +181,7 @@ namespace Vaccination.Booking.Umang
                     if (IsReponseValid(scheduleAppointmentRes) &&
                         scheduleAppointmentRes.pd.appointment_confirmation_no != null)
                     {
-                        this._isSlotBooked = true;
+                        _isSlotBooked = true;
                         Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("\nSuccess! Slot booked succeesfuly.");
                         Console.ResetColor();

@@ -7,6 +7,8 @@ using Vaccination.Booking.Contracts;
 using Vaccination.Booking.Umang;
 using Vaccination.Booking.Umang.Contracts;
 using Microsoft.Extensions.Configuration;
+using Vaccination.Booking.Cowin.Contracts;
+using Vaccination.Booking.Cowin;
 
 namespace Vaccine.Booking
 {
@@ -47,7 +49,7 @@ namespace Vaccine.Booking
                 client.BaseAddress = new Uri(umangConfigs.BaseUrl);
                 #region add headers
                 client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.ApplicationJson));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Vaccination.Booking.Umang.Constants.ApplicationJson));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", umangConfigs.BearerTokens.Cowin);
                 client.DefaultRequestHeaders.Connection.Clear();
                 client.DefaultRequestHeaders.Connection.Add("keep-alive");
@@ -65,15 +67,22 @@ namespace Vaccine.Booking
                 client.BaseAddress = new Uri(umangConfigs.BaseUrl);
                 #region add headers
                 client.DefaultRequestHeaders.Accept.Clear();
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Constants.ApplicationJson));
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Vaccination.Booking.Umang.Constants.ApplicationJson));
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", umangConfigs.BearerTokens.Umang);
                 client.DefaultRequestHeaders.Connection.Clear();
                 client.DefaultRequestHeaders.Connection.Add("keep-alive");
                 client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
                 #endregion
             });
+            CowinConfigurations cowinConfigs = new CowinConfigurations();
+            configuration.GetSection("Cowin").Bind(cowinConfigs);
+            services.AddHttpClient<IScheduleAppointmentService, ScheduleCowinAppointmentService>(client=>
+            {
+                client.BaseAddress = new Uri(cowinConfigs.BaseUrl);
+                client.DefaultRequestHeaders.Add("Host", cowinConfigs.Headers.Host);
+                client.DefaultRequestHeaders.Add("origin", cowinConfigs.Headers.Origin);
+            });
             services.AddSingleton<IBaseHttpClient, BaseHttpClient>();
-            services.AddSingleton<IScheduleAppointmentService, ScheduleAppointmentService>();
             services.AddSingleton<IProfileService, FileBasedProfileService>();
             services.AddSingleton<IPinCodeProvider, FileBasedPinCodeProvider>();
             services.AddSingleton<IUmangTokenProvider, UmangTokenProvider>();
