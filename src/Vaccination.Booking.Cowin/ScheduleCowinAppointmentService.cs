@@ -6,9 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vaccination.Booking.Contracts;
 using Vaccination.Booking.Cowin.Contracts;
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
-using System.Collections.Specialized;
 using System.Net.Http.Headers;
 using System.Linq;
 using System.Threading;
@@ -36,7 +34,6 @@ namespace Vaccination.Booking.Cowin
             _beneficiaries = profile.Beneficiaries;
             _centerPriorityList = pinCodes;
             var token = await GetTokenAsync(profile.Mobile);
-            int count = 0;
             if (!string.IsNullOrWhiteSpace(token))
             {
                 Console.WriteLine("\nTrying to book slots...");
@@ -50,7 +47,6 @@ namespace Vaccination.Booking.Cowin
                     var res = await _httpClient.GetAsync(QueryHelpers.AddQueryString(Constants.URLs.GetSlotsPublic, queryparams), cancellationTokenSource.Token);
                     if (res.IsSuccessStatusCode)
                     {
-                        count++;
                         var slots = JsonConvert.DeserializeObject<SlotData>(await res.Content.ReadAsStringAsync());
                         if (slots.centers.Count > 0)
                         {
@@ -59,7 +55,6 @@ namespace Vaccination.Booking.Cowin
                     }
                     else
                     {
-                        Console.WriteLine("Count=" + count);
                         Console.WriteLine(await res.Content.ReadAsStringAsync());
                         _isSlotBooked = true;
                     }
@@ -79,7 +74,7 @@ namespace Vaccination.Booking.Cowin
                 var generateOtpResponse = JsonConvert.DeserializeObject<GenerateOtpResponse>(await res.Content.ReadAsStringAsync());
                 Console.WriteLine("Please Enter Otp");
                 string otp = Console.ReadLine();
-                string hashedOtp = ComputeSha256Hash(otp);
+                string hashedOtp = Utilities.ComputeSha256Hash(otp);
                 var validateOtpRequest = new StringContent(JsonConvert.SerializeObject(new ValidateOtpRequest
                 {
                     otp = hashedOtp,
@@ -140,24 +135,6 @@ namespace Vaccination.Booking.Cowin
                 Console.WriteLine("\nSuccess! Slot booked succeesfuly.");
                 Console.ResetColor();
                 cancellationTokenSource.Cancel();
-            }
-        }
-
-        private static string ComputeSha256Hash(string rawData)
-        {
-            // Create a SHA256   
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                // ComputeHash - returns byte array  
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-
-                // Convert byte array to a string   
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
             }
         }
     }
