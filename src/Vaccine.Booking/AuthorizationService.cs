@@ -5,16 +5,16 @@ using Vaccination.Booking.Cowin;
 
 namespace Vaccine.Booking
 {
-    public class AuthenticationService : IAuthenticationService
+    public class AuthorizationService : IAuthorizationService
     {
         private readonly HttpClient _httpClient;
 
-        public AuthenticationService(HttpClient httpClient)
+        public AuthorizationService(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
 
-        public async Task<bool> Authenticate(string password)
+        public async Task<bool> Authorize(string password)
         {
             string passwordHash = Utilities.ComputeSha256Hash(password);
             var httpRes = await _httpClient.GetAsync(string.Empty);

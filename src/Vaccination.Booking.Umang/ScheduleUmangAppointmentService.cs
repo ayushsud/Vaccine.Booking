@@ -102,7 +102,7 @@ namespace Vaccination.Booking.Umang
                 if (IsReponseValid(generateOtpData))
                 {
                     string txnId = generateOtpData.pd.txnId;
-                    Console.WriteLine("Enter OTP");
+                    Console.WriteLine("\nPlease Enter Otp");
                     var otp = Console.ReadLine();
                     var confirmOtpRequest = new StringContent(JsonConvert.SerializeObject(new ConfirmOtpRequest
                     {

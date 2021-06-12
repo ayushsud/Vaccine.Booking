@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace Vaccination.Booking.Contracts
 {
-    public interface IAuthenticationService
+    public interface IAuthorizationService
     {
-        Task<bool> Authenticate(string password);
+        Task<bool> Authorize(string password);
     }
 }

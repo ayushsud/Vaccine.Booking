@@ -15,14 +15,14 @@ namespace Vaccination.Booking.Cowin
 {
     public class ScheduleCowinAppointmentService : IScheduleAppointmentService
     {
-        private readonly HttpClient _httpClient;
+        private readonly ICowinHttpClient _httpClient;
         private bool _isSlotBooked;
         private string _token;
         private List<string> _beneficiaries;
         private List<string> _centerPriorityList;
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public ScheduleCowinAppointmentService(HttpClient httpClient)
+        public ScheduleCowinAppointmentService(ICowinHttpClient httpClient)
         {
             _httpClient = httpClient;
             _isSlotBooked = false;
@@ -40,7 +40,7 @@ namespace Vaccination.Booking.Cowin
                 _token = token;
                 while (!_isSlotBooked)
                 {
-                    _httpClient.DefaultRequestHeaders.Authorization = null;
+                    _httpClient.ClearAuthorizationHeader();
                     var queryparams = new Dictionary<string, string>{
                         {"district_id",profile.DistrictId.ToString() },
                         {"date",profile.Date } };
@@ -72,7 +72,7 @@ namespace Vaccination.Booking.Cowin
             if (res.IsSuccessStatusCode)
             {
                 var generateOtpResponse = JsonConvert.DeserializeObject<GenerateOtpResponse>(await res.Content.ReadAsStringAsync());
-                Console.WriteLine("Please Enter Otp");
+                Console.WriteLine("\nPlease Enter Otp");
                 string otp = Console.ReadLine();
                 string hashedOtp = Utilities.ComputeSha256Hash(otp);
                 var validateOtpRequest = new StringContent(JsonConvert.SerializeObject(new ValidateOtpRequest
@@ -121,14 +121,14 @@ namespace Vaccination.Booking.Cowin
 
         private async Task BookSlotAsync(string sessionId)
         {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+            _httpClient.AddAuthorizationHeader("Bearer", _token);
             var req = new StringContent(JsonConvert.SerializeObject(new ScheduleAppointmentRequest
             {
                 beneficiaries = _beneficiaries,
                 session_id = sessionId
             }), Encoding.UTF8, Constants.ApplicationJson);
             var res = await _httpClient.PostAsync(Constants.URLs.ScheduleAppointment, req, cancellationTokenSource.Token);
-            if(res.IsSuccessStatusCode)
+            if (res.IsSuccessStatusCode)
             {
                 _isSlotBooked = true;
                 Console.ForegroundColor = ConsoleColor.Green;
