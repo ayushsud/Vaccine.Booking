@@ -80,6 +80,7 @@ namespace Vaccine.Booking
                 client.DefaultRequestHeaders.Add("subsid", "0");
                 client.DefaultRequestHeaders.Add("subsid2", "0");
                 client.DefaultRequestHeaders.Add("tenantId", string.Empty);
+                client.DefaultRequestHeaders.Add("Host", umangConfigs.Headers.Host);
                 #endregion
             });
             services.AddHttpClient<IUmangHttpClient, UmangHttpClient>(client =>
@@ -92,6 +93,7 @@ namespace Vaccine.Booking
                 client.DefaultRequestHeaders.Connection.Clear();
                 client.DefaultRequestHeaders.Connection.Add("keep-alive");
                 client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue { NoCache = true };
+                client.DefaultRequestHeaders.Add("Host", umangConfigs.Headers.Host);
                 #endregion
             });
             CowinConfigurations cowinConfigs = new CowinConfigurations();
