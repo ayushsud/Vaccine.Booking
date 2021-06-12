@@ -34,7 +34,6 @@ namespace Vaccination.Booking.Cowin
             _beneficiaries = profile.Beneficiaries;
             _centerPriorityList = pinCodes;
             if (string.IsNullOrWhiteSpace(profile.Mobile) ||
-                string.IsNullOrWhiteSpace(profile.Mpin) ||
                 string.IsNullOrWhiteSpace(profile.Date) ||
                 profile.DistrictId < 1 ||
                 _beneficiaries.Count == 0 ||
