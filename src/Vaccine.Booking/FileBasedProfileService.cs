@@ -25,7 +25,7 @@ namespace Vaccine.Booking
             catch (Exception)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Unable to read pin_codes.json");
+                Console.WriteLine("Unable to read profile.json");
                 Console.ResetColor();
                 throw;
             }
