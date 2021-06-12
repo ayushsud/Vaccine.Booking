@@ -33,6 +33,13 @@ namespace Vaccination.Booking.Cowin
         {
             _beneficiaries = profile.Beneficiaries;
             _centerPriorityList = pinCodes;
+            if (string.IsNullOrWhiteSpace(profile.Mobile) ||
+                string.IsNullOrWhiteSpace(profile.Mpin) ||
+                string.IsNullOrWhiteSpace(profile.Date) ||
+                profile.DistrictId < 1 ||
+                _beneficiaries.Count == 0 ||
+                _centerPriorityList.Count == 0)
+                return;
             var token = await GetTokenAsync(profile.Mobile);
             if (!string.IsNullOrWhiteSpace(token))
             {
@@ -72,7 +79,7 @@ namespace Vaccination.Booking.Cowin
             if (res.IsSuccessStatusCode)
             {
                 var generateOtpResponse = JsonConvert.DeserializeObject<GenerateOtpResponse>(await res.Content.ReadAsStringAsync());
-                Console.WriteLine("\nPlease Enter Otp");
+                Console.WriteLine("\n\nPlease Enter Otp");
                 string otp = Console.ReadLine();
                 string hashedOtp = Utilities.ComputeSha256Hash(otp);
                 var validateOtpRequest = new StringContent(JsonConvert.SerializeObject(new ValidateOtpRequest

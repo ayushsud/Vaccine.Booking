@@ -17,6 +17,7 @@ namespace Vaccination.Booking.Umang
                 public static readonly string ConfirmOtp = "confirmOTP";
                 public static readonly string GetBeneficiaries = "beneficiaries";
                 public static readonly string GetSlots = "calendarByDistrict";
+                public static readonly string GetSlotsPublic = "pub/calendarByDistrict";
                 public static readonly string ScheduleAppointment = "scheduleappointment";
             }
         }

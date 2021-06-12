@@ -54,13 +54,12 @@ namespace Vaccination.Booking.Umang
                     {
                         var slotsReq = new StringContent(JsonConvert.SerializeObject(new GetSlotsRequest
                         {
-                            token = token,
                             tkn = _umangtoken,
                             usrid = _userId,
                             district_id = profile.DistrictId,
                             date = profile.Date
                         }), Encoding.UTF8, Constants.ApplicationJson);
-                        var slotsRes = await _cowinHttpClient.PostWithRetryAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.GetSlots, slotsReq, tokenSource.Token);
+                        var slotsRes = await _cowinHttpClient.PostWithRetryAsync(Constants.URLs.Cowin + Constants.URLs.Verbs.GetSlotsPublic, slotsReq, tokenSource.Token);
                         if (slotsRes.IsSuccessStatusCode)
                         {
                             var res = JsonConvert.DeserializeObject<BaseResponse>(await slotsRes.Content.ReadAsStringAsync());

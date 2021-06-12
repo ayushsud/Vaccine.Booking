@@ -18,7 +18,7 @@ namespace Vaccination.Booking.Umang
 
         public async Task<UmangLoginResponse> GetUmangToken(string mobile, string mpin)
         {
-            Console.WriteLine("\nGenerating Umang Token");
+            Console.WriteLine("\n\nGenerating Umang Token");
             var req = new StringContent(JsonConvert.SerializeObject(new UmangLoginRequest
             {
                 mno = mobile,
